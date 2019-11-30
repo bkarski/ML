@@ -1,0 +1,50 @@
+from sklearn.pipeline import Pipeline
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.linear_model import LogisticRegression
+
+from sklearn.feature_extraction.text import CountVectorizer
+
+import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+# ladowanie pliku z tweetami
+df = pd.read_csv('Tweets.csv')
+
+# usuniecie neutralnych tweetow
+df = df[df['airline_sentiment'] != 'neutral']
+
+
+len(df)
+X = df['text']
+Y = df['airline_sentiment']
+
+X_train = X[:7000]
+X_validate = X[7000:9000]
+X_test = X[9000:]
+
+
+Y_train = Y[:7000]
+Y_validate = Y[7000:9000]
+Y_test = Y[9000:]
+Y_true = Y_test
+
+#podmiana negative i positive na 0/1:
+Y = Y.map({'negative': 0, 'positive': 1}).values
+
+
+count_vect = CountVectorizer()
+X_train_counts = count_vect.fit_transform(['dokument pierwszy.', 'To jest tekst drugiego dokumentu'])
+
+
+for nr in [10,100,200]:
+    for ngrams in [(1,2), (2,4)]:
+        text_clf = Pipeline([('vect', CountVectorizer(ngram_range=ngrams, analyzer="char")),
+                      ('tfidf', TfidfTransformer()),
+                      ('clf', LogisticRegression(penalty='l2', C=nr, class_weight=None)),
+        ])
+        text_clf = text_clf.fit(X_train, Y_train) # trenowanie modelu
+        Y_pred = text_clf.predict(X_test)
+        
+        print(metrics.classification_report(Y_true, Y_pred, digits=3))  # szczegolowa analiza, wszystkie miary
+        print(metrics.confusion_matrix(Y_true, Y_pred))
